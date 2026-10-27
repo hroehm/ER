@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q1.1</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; overflow-x: hidden; }
+        #terminal { height: 80vh; overflow-y: auto; border: 1px solid #00ff00; padding: 10px; margin-bottom: 10px; }
+        .input-line { display: flex; }
+        .prompt { margin-right: 10px; }
+        input[type="text"] { background: transparent; border: none; color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 16px; width: 80%; outline: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; background: #000; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    <div id="terminal">
+        <div>TSLA_OS v9.4.1 // CRITICAL ERROR: UNAUTHORIZED ACCESS DETECTED</div>
+        <div>System locked. Enter manual diagnostic commands to verify operator presence.</div>
+        <div style="color: #ff5555;">> Task 1: Type 'INIT WAKE'</div>
+    </div>
+    <div class="input-line">
+        <span class="prompt">root@tesla-rnd:~#</span>
+        <input type="text" id="cmdInput" autocomplete="off" autofocus>
+    </div>
+
+    <script>
+        let seconds = 0;
+        let step = 0;
+        const timerInterval = setInterval(() => {
+            seconds++;
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }, 1000);
+
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('cmdInput');
+
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                let val = input.value.trim().toUpperCase();
+                terminal.innerHTML += `<div>root@tesla-rnd:~# ${val}</div>`;
+                input.value = '';
+
+                if (step === 0 && val === 'INIT WAKE') {
+                    terminal.innerHTML += `<div>[OK] Subsystems waking...</div><div style="color: #ff5555;">> Task 2: Type 'PING LOCALHOST'</div>`;
+                    step++;
+                } else if (step === 1 && val === 'PING LOCALHOST') {
+                    terminal.innerHTML += `<div>[OK] Reply from 127.0.0.1: bytes=32 time<1ms</div><div style="color: #ff5555;">> Task 3: Type 'SYS DIAG'</div>`;
+                    step++;
+                } else if (step === 2 && val === 'SYS DIAG') {
+                    terminal.innerHTML += `<div>[WARN] External breach confirmed on R&D Subnet.</div><div style="color: #ff5555;">> REQUIRED: Enter Emergency Override Password</div>`;
+                    step++;
+                } else if (step === 3 && val === 'BREACH-01') {
+                    clearInterval(timerInterval);
+                    terminal.innerHTML += `<div>[ACCESS GRANTED] Mainframe unlocked.</div>`;
+                    terminal.innerHTML += `<div><strong>> PROCEED TO QUEST 1.2. Use this generated token to transfer your time: <span style="color:#fff;">TKN-${seconds}</span></strong></div>`;
+                    input.disabled = true;
+                } else {
+                    terminal.innerHTML += `<div>[ERROR] Command not recognized or out of sequence.</div>`;
+                }
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
