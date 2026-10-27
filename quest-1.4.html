@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q1.4</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; display: block; margin: 10px 0; width: 300px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter the Time Token from Q1.3:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button style="width:auto; text-align:center;" onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>TROUBLESHOOTING METHODOLOGY</h3>
+        <p style="color:red;">[ALERT] Terminal telemetry stream disconnected.</p>
+        <p>Apply standard Tech+ methodology. What is your FIRST step?</p>
+        
+        <div id="options">
+            <button onclick="checkAnswer(1, false)">Establish a theory of probable cause</button>
+            <button onclick="checkAnswer(1, true)">Identify the problem (Check cables/logs)</button>
+            <button onclick="checkAnswer(1, false)">Test the theory to determine cause</button>
+        </div>
+        
+        <div id="feedback" style="margin-top:20px; font-weight:bold;"></div>
+    </div>
+
+    <script>
+        let seconds = 0; let timerInterval; let step = 1;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+            }
+        }
+
+        function checkAnswer(currentStep, isCorrect) {
+            let opts = document.getElementById('options');
+            let fb = document.getElementById('feedback');
+            if(isCorrect) {
+                if(step === 1) {
+                    step = 2;
+                    fb.innerText = "[OK] Problem identified: Local switch unresponsive. What is the NEXT step?";
+                    opts.innerHTML = `
+                        <button onclick="checkAnswer(2, false)">Document findings</button>
+                        <button onclick="checkAnswer(2, false)">Establish a plan of action</button>
+                        <button onclick="checkAnswer(2, true)">Establish a theory of probable cause</button>
+                    `;
+                } else if(step === 2) {
+                    clearInterval(timerInterval);
+                    opts.innerHTML = "";
+                    fb.innerHTML = `[OK] Theory established: Switch overloaded by DoS. Port reset initiated. Telemetry restored.<br><br><strong>PROCEED TO QUEST 1.5. Time Token: <span style="color:#fff;">TKN-${seconds}</span></strong>`;
+                }
+            } else {
+                seconds += 10;
+                fb.innerText = "[ERROR] Incorrect methodology sequence. +10s penalty.";
+                updateTimerDisplay();
+            }
+        }
+    </script>
+</body>
+</html>

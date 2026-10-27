@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q3.2</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        #tcpdumpLog { height: 300px; overflow-y: auto; border: 1px solid #005500; padding: 10px; margin: 20px 0; font-size: 12px; background: #001100; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter Time Token from Q3.1:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>DEEP PACKET INSPECTION</h3>
+        <p>Execute 'tcpdump' to capture network traffic. Find the hidden Command & Control (C2) server IP Address in the payload.</p>
+        
+        <button id="dumpBtn" onclick="runDump()">RUN TCPDUMP</button>
+        <div id="tcpdumpLog">Awaiting packet capture...</div>
+
+        <div id="questionArea" class="hidden">
+            <p>> BLOCK THE C2 SERVER IP ADDRESS (Format: BLOCK xxx.xxx.xxx.xxx):</p>
+            <input type="text" id="ipInput" placeholder="BLOCK ...">
+            <button onclick="verifyBlock()">EXECUTE</button>
+            <div id="feedback" style="margin-top:10px; font-weight:bold;"></div>
+        </div>
+    </div>
+
+    <script>
+        let seconds = 0; let timerInterval;
+        const packets = [
+            "0x0000:  4500 003c 1c46 4000 4006 b1e6 c0a8 010a  E..<..F@.@......",
+            "0x0010:  c0a8 0101 a405 01bb 0000 0000 a002 7210  ..............r.",
+            "0x0020:  0000 0000 0204 05b4 0402 080a 0122 3344  .............\"3D",
+            "0x0030:  ... [ENCRYPTED TELEMETRY DATA] ...",
+            "0x0040:  4854 5450 2f31 2e31 2032 3030 204f 4b0d  HTTP/1.1 200 OK.",
+            "0x0050:  0xBADF00D -- MALICIOUS CALLBACK INITIATED --",
+            "0x0060:  4332 2053 6572 7665 723a 2031 3938 2e35  C2 Server: 198.5",
+            "0x0070:  312e 3130 302e 3435 0000 0000 0000 0000  1.100.45........"
+        ];
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+            }
+        }
+
+        function runDump() {
+            document.getElementById('dumpBtn').disabled = true;
+            let logDiv = document.getElementById('tcpdumpLog');
+            logDiv.innerHTML = "Listening on eth0, capture size 262144 bytes...\n\n";
+            let i = 0;
+            let stream = setInterval(() => {
+                if (i < packets.length) {
+                    logDiv.innerHTML += packets[i] + "\n";
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                    i++;
+                } else {
+                    clearInterval(stream);
+                    logDiv.innerHTML += "\n[CAPTURE COMPLETE] 8 packets received by filter.";
+                    document.getElementById('questionArea').classList.remove('hidden');
+                }
+            }, 600);
+        }
+
+        function verifyBlock() {
+            let cmd = document.getElementById('ipInput').value.trim().toUpperCase();
+            let fb = document.getElementById('feedback');
+            if(cmd === "BLOCK 198.51.100.45") {
+                clearInterval(timerInterval);
+                fb.innerHTML = `[FIREWALL UPDATED] C2 Sever connection terminated.<br><br><strong>PROCEED TO QUEST 3.3. Time Token: <span style="color:#fff;">TKN-${seconds}</span></strong>`;
+            } else {
+                seconds += 15; updateTimerDisplay();
+                fb.innerHTML = `<span style="color:#ff5555;">[ERROR] Incorrect IP or syntax. Target missed. +15s penalty.</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

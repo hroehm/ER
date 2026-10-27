@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q2.3</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        #fw-terminal { height: 150px; border: 1px solid #00ff00; padding: 10px; margin: 20px 0; background: #000500; }
+        .prompt { margin-right: 10px; }
+        #cmdInput { width: 70%; background: transparent; border: none; outline: none; font-size: 16px; color:#00ff00;}
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter Time Token from Q2.2:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>PERIMETER DEFENSE (FIREWALL CONFIG)</h3>
+        <p>The attacker is using <strong>10.5.5.200</strong> to exfiltrate data over port <strong>443</strong>.</p>
+        <p>SYNTAX HELP: <code>DENY [IP_ADDRESS] PORT [PORT_NUM]</code></p>
+        
+        <div id="fw-terminal">
+            <div>[FIREWALL OS v4.1] Active Connection State: CRITICAL</div>
+            <div>> Awaiting immediate firewall rule block command:</div>
+            <br>
+            <div style="display:flex;">
+                <span class="prompt">fw-admin@edge:~#</span>
+                <input type="text" id="cmdInput" autocomplete="off" autofocus>
+            </div>
+            <div id="feedback" style="margin-top:10px; font-weight:bold;"></div>
+        </div>
+    </div>
+
+    <script>
+        let seconds = 0; let timerInterval;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+            }
+        }
+
+        document.getElementById('cmdInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                let cmd = this.value.trim().toUpperCase();
+                let fb = document.getElementById('feedback');
+                
+                if(cmd === "DENY 10.5.5.200 PORT 443") {
+                    clearInterval(timerInterval);
+                    fb.innerHTML = `[RULE APPLIED] Inbound/Outbound traffic to 10.5.5.200 on port 443 DROPPED.<br><strong>PROCEED TO QUEST 2.4. Time Token: <span style="color:#fff;">TKN-${seconds}</span></strong>`;
+                    this.disabled = true;
+                } else {
+                    seconds += 10; updateTimerDisplay();
+                    fb.innerHTML = `<span style="color:#ff5555;">[SYNTAX ERROR] Traffic still flowing. +10s penalty. Check IP and Port.</span>`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q2.2</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        #siemLog { height: 250px; overflow-y: auto; border: 1px solid #005500; padding: 10px; margin: 20px 0; font-size: 14px; background: #001100; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter Time Token from Q2.1:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>SIEM LOG ANALYSIS</h3>
+        <p>Analyze the incoming SIEM logs. Track the attacker's lateral movement and identify the compromised server IP Address.</p>
+        
+        <button onclick="streamLogs()">STREAM LOGS</button>
+        <div id="siemLog">Awaiting telemetry...</div>
+
+        <div id="questionArea" class="hidden">
+            <p>> ENTER COMPROMISED IP ADDRESS DETECTED IN LOGS:</p>
+            <input type="text" id="ipInput" placeholder="xxx.xxx.x.xx">
+            <button onclick="verifyIP()">VERIFY</button>
+            <div id="feedback" style="margin-top:10px; font-weight:bold;"></div>
+        </div>
+    </div>
+
+    <script>
+        let seconds = 0; let timerInterval;
+        const logs = [
+            "10:45:01 - LOGIN SUCCESS: User 'm.intern' from IP 192.168.1.88",
+            "10:45:05 - AUTH AUDIT: User 'm.intern' executed 'sudo su'",
+            "10:45:12 - NETWORK: Outbound SSH connection initiated to 10.5.5.200 (R&D_SERVER_01)",
+            "10:45:15 - LOGIN SUCCESS: Root access established on 10.5.5.200",
+            "10:45:20 - FILE SYSTEM: Unauthorized archive created on 10.5.5.200 (/tmp/payload.tar.gz)",
+            "10:45:25 - NETWORK: Attempting exfiltration from 10.5.5.200 over port 443"
+        ];
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+            }
+        }
+
+        function streamLogs() {
+            let logDiv = document.getElementById('siemLog');
+            logDiv.innerHTML = "";
+            let i = 0;
+            let stream = setInterval(() => {
+                if (i < logs.length) {
+                    logDiv.innerHTML += logs[i] + "\n";
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                    i++;
+                } else {
+                    clearInterval(stream);
+                    document.getElementById('questionArea').classList.remove('hidden');
+                }
+            }, 800);
+        }
+
+        function verifyIP() {
+            let ip = document.getElementById('ipInput').value.trim();
+            let fb = document.getElementById('feedback');
+            if(ip === "10.5.5.200") {
+                clearInterval(timerInterval);
+                fb.innerHTML = `[TARGET IDENTIFIED] Malicious pivot point confirmed at 10.5.5.200.<br><br><strong>PROCEED TO QUEST 2.3. Time Token: <span style="color:#fff;">TKN-${seconds}</span></strong>`;
+            } else {
+                seconds += 15; updateTimerDisplay();
+                fb.innerHTML = `<span style="color:#ff5555;">[ERROR] Incorrect IP. Analysis failed. +15s penalty.</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

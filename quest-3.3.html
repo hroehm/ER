@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q3.3</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; display: block; margin: 10px 0; width: 100%; text-align: left;}
+        #terminalBox { border: 1px solid #00ff00; padding: 15px; margin-top: 15px; background: #000500; }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter Time Token from Q3.2:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button style="width:auto;" onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>SECURITY PRINCIPLES (CIA TRIAD)</h3>
+        <div id="terminalBox">
+            <p id="promptText" style="font-weight:bold;">SYSTEM OVERRIDE: To finalize system restoration, you must verify core security principles.</p>
+            <p id="questionText" style="color: #fff;">Q1: By using SHA-256 hashes to verify the firmware was not altered by the attacker, which principle did you uphold?</p>
+            <div id="optionsArea">
+                <button onclick="checkAnswer('C')">Confidentiality</button>
+                <button onclick="checkAnswer('I')">Integrity</button>
+                <button onclick="checkAnswer('A')">Availability</button>
+            </div>
+            <div id="feedback" style="margin-top:15px; font-weight:bold;"></div>
+        </div>
+    </div>
+
+    <script>
+        let seconds = 0; let timerInterval; let currentQ = 1;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+            }
+        }
+
+        function checkAnswer(ans) {
+            let fb = document.getElementById('feedback');
+            let qText = document.getElementById('questionText');
+            
+            if (currentQ === 1) {
+                if (ans === 'I') {
+                    currentQ++;
+                    fb.innerText = "[CORRECT] Integrity verified.";
+                    qText.innerText = "Q2: By encrypting the R&D documents before the attacker could exfiltrate them, which principle did you uphold?";
+                } else { seconds += 10; fb.innerText = "[ERROR] Incorrect. +10s penalty."; updateTimerDisplay(); }
+            } else if (currentQ === 2) {
+                if (ans === 'C') {
+                    currentQ++;
+                    fb.innerText = "[CORRECT] Confidentiality verified.";
+                    qText.innerText = "Q3: By stopping the attacker from launching a Denial of Service (DoS) attack on the manufacturing floor, which principle did you uphold?";
+                } else { seconds += 10; fb.innerText = "[ERROR] Incorrect. +10s penalty."; updateTimerDisplay(); }
+            } else if (currentQ === 3) {
+                if (ans === 'A') {
+                    clearInterval(timerInterval);
+                    document.getElementById('optionsArea').innerHTML = "";
+                    fb.innerHTML = `[CORRECT] Availability verified. CIA Triad secured.<br><br><strong>PROCEED TO QUEST 3.4. Time Token: <span style="color:#fff;">TKN-${seconds}</span></strong>`;
+                } else { seconds += 10; fb.innerText = "[ERROR] Incorrect. +10s penalty."; updateTimerDisplay(); }
+            }
+        }
+    </script>
+</body>
+</html>

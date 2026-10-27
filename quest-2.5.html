@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q2.5</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        #processTree { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        #processTree th, #processTree td { border: 1px solid #005500; padding: 8px; text-align: left; }
+        #processTree th { background: #003300; }
+        .prompt-line { display: flex; margin-top: 20px; }
+        .master-code { display: inline-block; padding: 10px; background: #00ff00; color: #000; font-size: 24px; margin-top: 20px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter Time Token from Q2.4:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>PROCESS ERADICATION</h3>
+        <p>The server is isolated, but the malware is still burning CPU. Identify the rogue process from the list below and terminate it.</p>
+        <p>Command syntax: <code>KILL [PID]</code></p>
+        
+        <table id="processTree">
+            <tr><th>PID</th><th>USER</th><th>CPU%</th><th>COMMAND</th></tr>
+            <tr><td>1024</td><td>system</td><td>0.5</td><td>/usr/bin/teslOS_kernel</td></tr>
+            <tr><td>2048</td><td>root</td><td>12.0</td><td>battery_bms_service.d</td></tr>
+            <tr><td>3119</td><td>robotics</td><td>45.5</td><td>auto_assembly_arm_ctl</td></tr>
+            <tr><td>4992</td><td>m.intern</td><td>98.9</td><td>./exfil_payload.elf -hidden</td></tr>
+            <tr><td>5120</td><td>admin</td><td>1.2</td><td>sshd: admin@pts/0</td></tr>
+        </table>
+
+        <div class="prompt-line">
+            <span style="margin-right:10px;">root@isolated-rd:~#</span>
+            <input type="text" id="cmdInput" autocomplete="off" autofocus>
+        </div>
+        <div id="feedback" style="margin-top:10px; font-weight:bold;"></div>
+    </div>
+
+    <script>
+        let seconds = 0; let timerInterval;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+            }
+        }
+
+        document.getElementById('cmdInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                let cmd = this.value.trim().toUpperCase();
+                let fb = document.getElementById('feedback');
+                
+                if(cmd === "KILL 4992") {
+                    clearInterval(timerInterval);
+                    fb.innerHTML = `[SIGKILL SENT] Rogue process terminated. CPU dropping to normal levels.<br><br>
+                    <strong>CONTAINMENT PHASE COMPLETE.</strong><br>
+                    Provide this master access code to enter Section 3 (Eradication & Recovery):<br>
+                    <div class="master-code">SEC3-ACCESS-${seconds}</div>`;
+                    this.disabled = true;
+                } else if(cmd.startsWith("KILL ")) {
+                    seconds += 20; updateTimerDisplay();
+                    fb.innerHTML = `<span style="color:#ff5555;">[FATAL ERROR] You terminated a critical system process! Manufacturing line halted. +20s penalty.</span>`;
+                } else {
+                    fb.innerHTML = `<span style="color:#ff5555;">[SYNTAX ERROR] Use format 'KILL [PID]'.</span>`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

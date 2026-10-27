@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla Mainframe - Q1.3</title>
+    <style>
+        body { background-color: #000; color: #00ff00; font-family: 'Courier New', Courier, monospace; padding: 20px; }
+        .hidden { display: none; }
+        #timer { position: fixed; top: 10px; right: 20px; font-size: 20px; font-weight: bold; border: 1px solid #00ff00; padding: 5px; }
+        input[type="text"], button { background: #111; border: 1px solid #00ff00; color: #00ff00; padding: 5px; font-family: 'Courier New'; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; margin-right: 10px; }
+        #dataStream { border: 1px solid #00ff00; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 20px 0; background: #001100; }
+    </style>
+</head>
+<body>
+    <div id="timer">T+ <span id="timeDisplay">00:00</span></div>
+    
+    <div id="authScreen">
+        <h3>AUTHENTICATION REQUIRED</h3>
+        <p>Enter the Time Token from Q1.2:</p>
+        <input type="text" id="tknInput" placeholder="TKN-XX">
+        <button onclick="startQuest()">AUTHENTICATE</button>
+    </div>
+
+    <div id="questScreen" class="hidden">
+        <h3>DATA CLASSIFICATION TRIAGE</h3>
+        <p>The attacker is scraping files. Classify the current file correctly to encrypt it. You must successfully classify 3 files.</p>
+        
+        <div id="dataStream">FILE: <span id="currentFile" style="margin-left:10px; color:#fff;">Awaiting Data...</span></div>
+        
+        <div>
+            <button onclick="classify('Public')">PUBLIC</button>
+            <button onclick="classify('Internal')">INTERNAL</button>
+            <button onclick="classify('Confidential')">CONFIDENTIAL (R&D)</button>
+        </div>
+        
+        <div id="feedback" style="margin-top:20px; font-weight:bold;">Score: 0 / 3</div>
+    </div>
+
+    <script>
+        let seconds = 0;
+        let timerInterval;
+        let score = 0;
+        
+        const files = [
+            { name: "Cafeteria_Menu_Oct.pdf", type: "Public" },
+            { name: "Employee_Holiday_Schedule.docx", type: "Internal" },
+            { name: "AutoDrive_NeuralNet_Weights.bin", type: "Confidential" },
+            { name: "Press_Release_Draft.txt", type: "Public" },
+            { name: "Battery_Chemistry_Schematics.cad", type: "Confidential" }
+        ];
+        
+        let currentFileIndex = 0;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timeDisplay').innerText = m + ':' + s;
+        }
+
+        function startQuest() {
+            let tkn = document.getElementById('tknInput').value.trim().toUpperCase();
+            if(tkn.startsWith('TKN-')) {
+                seconds = parseInt(tkn.split('-')[1]) || 0;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('questScreen').classList.remove('hidden');
+                timerInterval = setInterval(() => { seconds++; updateTimerDisplay(); }, 1000);
+                nextFile();
+            }
+        }
+
+        function nextFile() {
+            currentFileIndex = Math.floor(Math.random() * files.length);
+            document.getElementById('currentFile').innerText = files[currentFileIndex].name;
+        }
+
+        function classify(guess) {
+            let correct = files[currentFileIndex].type;
+            if(guess === correct) {
+                score++;
+                document.getElementById('feedback').innerText = `Score: ${score} / 3 - Encryption Successful!`;
+                if(score >= 3) {
+                    clearInterval(timerInterval);
+                    document.getElementById('questScreen').innerHTML += `<br><br><strong>[SYSTEM SECURED] Proceed to QUEST 1.4. Your Time Token: <span style="color:#fff;">TKN-${seconds}</span></strong>`;
+                } else {
+                    nextFile();
+                }
+            } else {
+                seconds += 15; // Penalty
+                document.getElementById('feedback').innerText = `ERROR! Incorrect classification. File exposed. +15s penalty. Score: ${score} / 3`;
+                updateTimerDisplay();
+            }
+        }
+    </script>
+</body>
+</html>
